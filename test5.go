@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/rand"
-	"math/rand"
+	mrand "math/rand"
 	"encoding/binary"
 	"flag"
 	"fmt"
